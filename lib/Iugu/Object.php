@@ -66,6 +66,11 @@ class Iugu_Object implements ArrayAccess
         return array_keys($this->_attributes);
     }
 
+    public function toArray()
+    {
+        return $this->_attributes;
+    }
+
     public function modifiedAttributes()
     {
         return array_intersect_key($this->_attributes, $this->_unsavedAttributes);
