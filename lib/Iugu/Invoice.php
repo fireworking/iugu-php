@@ -44,17 +44,15 @@ class Iugu_Invoice extends APIResource
         return Iugu_Customer::fetch($this->customer_id);
     }
 
-    public function cancel()
+    public function cancel($forceThrow = false)
     {
         if ($this->is_new()) {
             return false;
         }
 
         try {
-            $response = self::API()->request(
-        'PUT',
-        static::url($this).'/cancel'
-      );
+            $response = self::API()
+                ->request('PUT', static::url($this) . '/cancel');
             if (isset($response->errors)) {
                 throw new IuguRequestException($response->errors);
             }
@@ -62,6 +60,9 @@ class Iugu_Invoice extends APIResource
             $this->copy($new_object);
             $this->resetStates();
         } catch (Exception $e) {
+            if ($forceThrow === true) {
+                throw $e;
+            }
             return false;
         }
 
