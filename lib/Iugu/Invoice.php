@@ -2,6 +2,11 @@
 
 class Iugu_Invoice extends APIResource
 {
+    /**
+     * @var mixed[array|string]
+     */
+    protected $errors;
+
     public static function create($attributes = [])
     {
         return self::createAPI($attributes);
@@ -44,27 +49,50 @@ class Iugu_Invoice extends APIResource
         return Iugu_Customer::fetch($this->customer_id);
     }
 
-    public function cancel()
+    /**
+     * @return bool
+     */
+    public function cancelAction()
     {
         if ($this->is_new()) {
             return false;
         }
-
         try {
-            $response = self::API()->request(
-        'PUT',
-        static::url($this).'/cancel'
-      );
+            $response = self::API()
+                ->request('PUT', static::url($this) . '/cancel');
             if (isset($response->errors)) {
-                throw new IuguRequestException($response->errors);
+                $this->errors = $response->errors;
+                return false;
             }
-            $new_object = self::createFromResponse($response);
-            $this->copy($new_object);
-            $this->resetStates();
         } catch (Exception $e) {
+            $this->errors = $e->getMessage();
             return false;
         }
+        $this->copy(self::createFromResponse($response));
+        $this->resetStates();
+        return true;
+    }
 
+    /**
+     * @return bool
+     */
+    public function cancel()
+    {
+        return $this->cancelAction();
+    }
+
+    /**
+     * @throws IuguRequestException
+     * @return bool
+     */
+    public function cancelOrThrow()
+    {
+        if (! $this->cancelAction()) {
+            if (isset($this->errors)) {
+                throw new IuguRequestException($this->errors);
+            }
+            return false;
+        }
         return true;
     }
 
